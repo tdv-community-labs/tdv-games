@@ -8,213 +8,12 @@
   <meta name="theme-color" content="#080C16" id="metaThemeColor">
 
   <!-- Favicon & PWA Manifest -->
-  <link rel="icon" type="image/jpeg" href="assets/tdv-logo.png">
+  <link rel="icon" type="image/png" href="assets/tdv-logo.png">
   <link rel="apple-touch-icon" href="assets/tdv-logo.png">
   <link rel="manifest" href="manifest.json">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    // ==========================================
-    // TDV COMMUNITY LABS UNIFIED SSO & AUTH GATEWAY
-    // ==========================================
-    const SSO_SESSION_KEY = 'tdv_ecosystem_session_v1';
-    let currentRegAvatar = '🧑‍🎓';
-
-    function getHubSession() {
-      try {
-        const raw = localStorage.getItem(SSO_SESSION_KEY);
-        if (raw) {
-          const sess = JSON.parse(raw);
-          if (sess && sess.expiresAt > Date.now()) return sess;
-          localStorage.removeItem(SSO_SESSION_KEY);
-        }
-      } catch (e) {}
-      return null;
-    }
-
-    function updateSsoUi() {
-      const sess = getHubSession();
-      const label = document.getElementById('ssoUserLabel');
-      const btn = document.getElementById('ssoAuthBtn');
-      if (label && btn) {
-        if (sess) {
-          label.textContent = sess.fullName || sess.username;
-          btn.classList.add('bg-purple-500/25', 'border-purple-400/50', 'text-white');
-        } else {
-          label.textContent = 'Vahid Giriş';
-          btn.classList.remove('bg-purple-500/25', 'border-purple-400/50', 'text-white');
-        }
-      }
-
-      // Update outbound links with SSO ticket
-      const ticket = sess ? btoa(unescape(encodeURIComponent(JSON.stringify(sess)))) : '';
-      document.querySelectorAll('a[href*="tdv-e-school.vercel.app"], a[href*="school-minifootball-tournament.vercel.app"], a[href*="tdv-games.vercel.app"], a[href*="tdv-mafia-pzvc.vercel.app"]').forEach(link => {
-        const baseHref = link.getAttribute('data-base-href') || link.href.split('?')[0];
-        link.setAttribute('data-base-href', baseHref);
-        if (ticket) {
-          link.href = baseHref + (baseHref.endsWith('/') ? '' : '/') + '?sso_ticket=' + encodeURIComponent(ticket);
-        } else {
-          link.href = baseHref;
-        }
-      });
-    }
-
-    function openSsoModal() {
-      const sess = getHubSession();
-      if (sess) {
-        const nameEl = document.getElementById('ssoActiveName');
-        const roleEl = document.getElementById('ssoActiveRole');
-        const avEl = document.getElementById('ssoActiveAvatar');
-        if (nameEl) nameEl.textContent = sess.fullName || sess.username;
-        if (roleEl) roleEl.textContent = sess.role === 'teacher' ? 'Fənn Müəllimi' : (sess.schoolClass ? `${sess.schoolClass} Şagirdi` : 'Məktəb Şagirdi');
-        if (avEl) avEl.textContent = sess.avatar || '🧑‍🎓';
-        document.getElementById('ssoProfileModal').classList.remove('hidden');
-      } else {
-        ssoSwitchTab('login');
-        document.getElementById('ssoLoginModal').classList.remove('hidden');
-      }
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
-    function closeSsoModal() {
-      const m1 = document.getElementById('ssoLoginModal');
-      const m2 = document.getElementById('ssoProfileModal');
-      if (m1) m1.classList.add('hidden');
-      if (m2) m2.classList.add('hidden');
-    }
-
-    function ssoSwitchTab(tab) {
-      const loginView = document.getElementById('ssoLoginView');
-      const regView = document.getElementById('ssoRegisterView');
-      const tabLoginBtn = document.getElementById('ssoTabLoginBtn');
-      const tabRegBtn = document.getElementById('ssoTabRegBtn');
-      const errEl = document.getElementById('ssoAlertError');
-      const succEl = document.getElementById('ssoAlertSuccess');
-      if (errEl) errEl.classList.add('hidden');
-      if (succEl) succEl.classList.add('hidden');
-
-      if (tab === 'login') {
-        if (loginView) loginView.classList.remove('hidden');
-        if (regView) regView.classList.add('hidden');
-        if (tabLoginBtn) {
-          tabLoginBtn.className = 'flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md';
-        }
-        if (tabRegBtn) {
-          tabRegBtn.className = 'flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer text-slate-400 hover:text-white';
-        }
-      } else {
-        if (loginView) loginView.classList.add('hidden');
-        if (regView) regView.classList.remove('hidden');
-        if (tabLoginBtn) {
-          tabLoginBtn.className = 'flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer text-slate-400 hover:text-white';
-        }
-        if (tabRegBtn) {
-          tabRegBtn.className = 'flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-md';
-        }
-      }
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
-    function ssoSelectAvatar(av, btn) {
-      currentRegAvatar = av;
-      document.querySelectorAll('.sso-avatar-btn cursor-pointer').forEach(b => {
-        b.className = 'sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700';
-      });
-      btn.className = 'sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-purple-500 text-white scale-110 shadow-md ring-2 ring-purple-400';
-    }
-
-    function ssoLogin(username, grade, role = 'student') {
-      const trimmed = (username || '').trim();
-      if (!trimmed) return;
-      const cleanGrade = Number(grade) || 10;
-      const avatar = role === 'teacher' ? '👨‍🏫' : (cleanGrade >= 10 ? '🧑‍🎓' : '🎒');
-      const session = {
-        userId: 'tdv-usr-' + Date.now().toString(36),
-        username: trimmed,
-        fullName: trimmed,
-        grade: cleanGrade,
-        schoolClass: cleanGrade > 0 ? `${cleanGrade}A` : 'Müəllim',
-        role: role,
-        avatar: avatar,
-        token: 'tdv_token_' + Math.random().toString(36).substring(2),
-        createdAt: Date.now(),
-        expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
-      };
-      localStorage.setItem(SSO_SESSION_KEY, JSON.stringify(session));
-      closeSsoModal();
-      updateSsoUi();
-    }
-
-    function ssoRegister(fullName, username, grade, classLetter, pin, confirmPin) {
-      const errEl = document.getElementById('ssoAlertError');
-      const succEl = document.getElementById('ssoAlertSuccess');
-      const errText = document.getElementById('ssoAlertErrorText');
-      const succText = document.getElementById('ssoAlertSuccessText');
-
-      const trimmedName = (fullName || '').trim();
-      const trimmedUser = (username || '').trim();
-      if (!trimmedName) {
-        if (errText) errText.textContent = 'Zəhmət olmasa ad və soyadınızı daxil edin.';
-        if (errEl) errEl.classList.remove('hidden');
-        return;
-      }
-      if (!trimmedUser) {
-        if (errText) errText.textContent = 'Zəhmət olmasa istifadəçi adı daxil edin.';
-        if (errEl) errEl.classList.remove('hidden');
-        return;
-      }
-      if (pin && confirmPin && pin !== confirmPin) {
-        if (errText) errText.textContent = 'Daxil edilən şifrələr bir-birinə uyğun gəlmir.';
-        if (errEl) errEl.classList.remove('hidden');
-        return;
-      }
-
-      const cleanGrade = Number(grade) || 10;
-      const finalClass = cleanGrade > 0 ? `${cleanGrade}${classLetter || 'A'}` : 'Müəllim';
-      const role = cleanGrade === 0 ? 'teacher' : 'student';
-      const session = {
-        userId: 'tdv-usr-' + Date.now().toString(36),
-        username: trimmedUser,
-        fullName: trimmedName,
-        grade: cleanGrade,
-        schoolClass: finalClass,
-        role: role,
-        avatar: currentRegAvatar || (role === 'teacher' ? '👨‍🏫' : '🧑‍🎓'),
-        token: 'tdv_token_' + Math.random().toString(36).substring(2),
-        createdAt: Date.now(),
-        expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
-      };
-
-      try {
-        const regUsersRaw = localStorage.getItem('tdv_registered_users_v1');
-        const regUsers = regUsersRaw ? JSON.parse(regUsersRaw) : [];
-        regUsers.push({ ...session, pin: pin || '' });
-        localStorage.setItem('tdv_registered_users_v1', JSON.stringify(regUsers));
-        localStorage.setItem(SSO_SESSION_KEY, JSON.stringify(session));
-
-        if (succText) succText.textContent = 'Hesabınız uğurla yaradıldı! Daxil olunur...';
-        if (succEl) succEl.classList.remove('hidden');
-        setTimeout(() => {
-          closeSsoModal();
-          updateSsoUi();
-        }, 500);
-      } catch(e) {
-        if (errText) errText.textContent = 'Qeydiyyat zamanı xəta baş verdi.';
-        if (errEl) errEl.classList.remove('hidden');
-      }
-    }
-
-    function ssoLogout() {
-      localStorage.removeItem(SSO_SESSION_KEY);
-      closeSsoModal();
-      updateSsoUi();
-    }
-
-    document.addEventListener('DOMContentLoaded', updateSsoUi);
-    window.addEventListener('load', updateSsoUi);
-
-  </script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -250,7 +49,7 @@
     .dark body {
       background-color: #060913;
       color: #f1f5f9;
-      background-image: 
+      background-image:
         radial-gradient(at 0% 0%, rgba(147, 51, 234, 0.08) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(239, 68, 68, 0.08) 0px, transparent 50%),
         radial-gradient(at 50% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
@@ -260,7 +59,7 @@
     .light body {
       background-color: #f8fafc;
       color: #0f172a;
-      background-image: 
+      background-image:
         radial-gradient(at 0% 0%, rgba(147, 51, 234, 0.05) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(239, 68, 68, 0.05) 0px, transparent 50%);
       background-attachment: fixed;
@@ -321,7 +120,7 @@
         </a>
 
         <!-- Theme Toggle Button -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" aria-label="Mövzunu dəyiş" class="p-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition flex items-center justify-center">
+        <button id="themeToggleBtn" aria-label="Mövzunu dəyiş" class="p-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition flex items-center justify-center">
           <i id="themeIcon" data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i>
         </button>
       </div>
@@ -331,7 +130,7 @@
   <!-- ================= MAIN NAVIGATION HEADER ================= -->
   <header class="w-full border-b border-slate-800/80 bg-slate-950/70 dark:bg-[#080C16]/80 backdrop-blur-md z-40">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-      
+
       <!-- Brand Logo: Dedicated Games Product Logo -->
       <div class="flex items-center space-x-3 shrink-0">
         <a href="https://tdv-games.vercel.app/" class="flex items-center gap-3 group" style="text-decoration: none;">
@@ -341,7 +140,7 @@
           <div>
             <span class="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
               TDV <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-rose-400">GAMES</span>
-              <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40">ARENA</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black uppercase">ARENA</span>
             </span>
             <span class="block text-[10px] text-purple-400 -mt-0.5 font-semibold tracking-wider">TDV COMMUNITY LABS • ARCADE & ARENA</span>
           </div>
@@ -371,7 +170,7 @@
 
       <!-- Action Button: Launch Mafia Directly & Unified SSO -->
       <div class="flex items-center gap-2">
-        <button id="ssoAuthBtn" onclick="openSsoModal()" class="inline-flex items-center gap-1.5 text-xs font-bold text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-2 rounded-xl border border-purple-500/30 transition shadow-sm cursor-pointer" title="TDV Community Labs Vahid Giriş">
+        <button id="ssoAuthBtn" class="inline-flex items-center gap-1.5 text-xs font-bold text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-2 rounded-xl border border-purple-500/30 transition shadow-sm cursor-pointer" title="TDV Community Labs Vahid Giriş">
           <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
           <span id="ssoUserLabel">Vahid Giriş</span>
         </button>
@@ -392,11 +191,11 @@
         <span class="w-2 h-2 rounded-full bg-purple-400 pulse-dot"></span>
         TDV Community Labs • İntellektual Oyunlar Portalı
       </div>
-      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white dark:text-white tracking-tight leading-tight mb-4">
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-4">
         TDV Games <br>
         <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">İntellektual Əyləncə Portalı</span>
       </h1>
-      <p class="text-slate-300 dark:text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto mb-6 font-normal">
+      <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto mb-6 font-normal">
         Şagirdlər üçün şahmat, dama, məntiq tapmacaları və komandalararası sosial deduksiya masaları.
       </p>
 
@@ -414,14 +213,14 @@
 
     <!-- ================= FEATURED SHOWCASE: TDV MAFIA ================= -->
     <section id="tdv-mafia" class="mb-14 scroll-mt-20">
-      
+
       <div class="glass-card rounded-3xl p-6 sm:p-10 border border-red-500/30 relative overflow-hidden shadow-2xl shadow-red-950/40">
         <!-- Glow accents -->
         <div class="absolute -top-24 -right-24 w-80 h-80 bg-red-600/15 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
-          
+
           <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8 border-b border-slate-800/80 pb-6">
             <div class="flex items-center gap-4">
               <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-800 border border-red-400/40 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-red-600/30 shrink-0">
@@ -450,7 +249,7 @@
 
           <!-- Feature Description -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            
+
             <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
               <div class="flex items-center gap-2 text-red-400 font-bold text-sm mb-1.5">
                 <i data-lucide="layers" class="w-4 h-4"></i>
@@ -491,7 +290,7 @@
             </h3>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-center">
-              
+
               <div class="p-3 rounded-xl bg-slate-950/70 border border-red-500/20 hover:border-red-500/40 transition">
                 <div class="text-lg mb-1">🔥</div>
                 <div class="font-bold text-white text-xs">Dante's Inferno</div>
@@ -551,7 +350,7 @@
 
     <!-- ================= SECTION 2: UPCOMING GAMES & INCUBATOR ================= -->
     <section id="upcoming-games" class="mb-14">
-      
+
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
@@ -560,14 +359,14 @@
           </h2>
           <p class="text-xs sm:text-sm text-slate-400">Hazırlıq mərhələsində olan interaktiv təhsil layihələri</p>
         </div>
-        <button onclick="openIdeaModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-2 rounded-xl border border-purple-500/30 transition">
+        <button id="openIdeaModalBtn" class="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-2 rounded-xl border border-purple-500/30 transition">
           <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>
           <span>Oyun İdeyası Təklif Et</span>
         </button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        
+
         <!-- Upcoming Game 1 -->
         <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border-slate-800/80">
           <div>
@@ -650,7 +449,7 @@
         <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-5 font-normal">
           Məktəb portalında hansı oyunların yer almasını istərdin? İdeyalarını və ya kodlaşdırdığın mini-veb layihəni bizimlə bölüş.
         </p>
-        <button onclick="openIdeaModal()" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-900/30 transition">
+        <button id="submitIdeaBtn" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-900/30 transition">
           <i data-lucide="send" class="w-3.5 h-3.5"></i>
           <span>İdeya Formunu Aç</span>
         </button>
@@ -695,22 +494,22 @@
           <p class="text-[11px] text-slate-400">TDV Games bölməsində hansı oyunu görmək istərdin?</p>
         </div>
       </div>
-      <button onclick="closeIdeaModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+      <button id="closeIdeaModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
 
-    <form id="ideaForm" onsubmit="submitIdea(event)" class="space-y-4 text-xs">
+    <form id="ideaForm" class="space-y-4 text-xs">
       <div>
-        <label class="block text-slate-300 font-semibold mb-1">Adın və Sinfin:</label>
+        <label for="ideaAuthor" class="block text-slate-300 font-semibold mb-1">Adın və Sinfin:</label>
         <input id="ideaAuthor" type="text" required placeholder="Məs: Əli (10A)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500">
       </div>
       <div>
         <div class="flex items-center justify-between mb-1">
-          <label class="text-slate-300 font-semibold">Oyunun İdeyası / Qaydaları:</label>
+          <label for="ideaText" class="text-slate-300 font-semibold">Oyunun İdeyası / Qaydaları:</label>
           <span id="ideaCharCount" class="text-[10px] text-slate-500 font-mono">0 / 300</span>
         </div>
-        <textarea id="ideaText" rows="4" maxlength="300" oninput="updateIdeaCharCount(this)" required placeholder="Oyun nə haqqında olsun? Məntiq, yarış, yoxsa intellektual viktorina?" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"></textarea>
+        <textarea id="ideaText" rows="4" maxlength="300" required placeholder="Oyun nə haqqında olsun? Məntiq, yarış, yoxsa intellektual viktorina?" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"></textarea>
       </div>
 
       <div id="ideaFeedback" class="hidden p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-center font-medium">
@@ -725,102 +524,477 @@
 
   <!-- ================= CLIENT JS ================= -->
   <script>
-    lucide.createIcons();
+    // Global TDV object to encapsulate modules
+    const TDV = TDV || {};
 
-    // Theme Management (Dark / Light)
-    function applyTheme(theme) {
-      const html = document.documentElement;
-      const icon = document.getElementById('themeIcon');
-      const metaTheme = document.getElementById('metaThemeColor');
+    // SSO Module
+    TDV.SSO = (function() {
+        const SSO_SESSION_KEY = 'tdv_ecosystem_session_v1';
+        const REGISTERED_USERS_KEY = 'tdv_registered_users_v1'; // For mock registration
+        let currentRegAvatar = '🧑‍🎓'; // Default avatar for registration
 
-      if (theme === 'light') {
-        html.classList.remove('dark');
-        html.classList.add('light');
-        if (icon) icon.setAttribute('data-lucide', 'moon');
-        if (metaTheme) metaTheme.setAttribute('content', '#F8FAFC');
-      } else {
-        html.classList.remove('light');
-        html.classList.add('dark');
-        if (icon) icon.setAttribute('data-lucide', 'sun');
-        if (metaTheme) metaTheme.setAttribute('content', '#080C16');
-      }
-      lucide.createIcons();
-    }
+        // DOM Elements (cached)
+        let ssoUserLabel, ssoAuthBtn, ssoLoginModal, ssoProfileModal,
+            ssoLoginView, ssoRegisterView, ssoTabLoginBtn, ssoTabRegBtn,
+            ssoAlertError, ssoAlertSuccess, ssoAlertErrorText, ssoAlertSuccessText,
+            ssoActiveName, ssoActiveRole, ssoActiveAvatar,
+            ssoUsernameInput, ssoGradeInput,
+            ssoRegFullName, ssoRegUsername, ssoRegGrade, ssoRegClassLetter;
 
-    function toggleTheme() {
-      const isDark = document.documentElement.classList.contains('dark');
-      const newTheme = isDark ? 'light' : 'dark';
-      localStorage.setItem('tdv_theme', newTheme);
-      applyTheme(newTheme);
-    }
+        function cacheDomElements() {
+            ssoUserLabel = document.getElementById('ssoUserLabel');
+            ssoAuthBtn = document.getElementById('ssoAuthBtn');
+            ssoLoginModal = document.getElementById('ssoLoginModal');
+            ssoProfileModal = document.getElementById('ssoProfileModal');
+            ssoLoginView = document.getElementById('ssoLoginView');
+            ssoRegisterView = document.getElementById('ssoRegisterView');
+            ssoTabLoginBtn = document.getElementById('ssoTabLoginBtn');
+            ssoTabRegBtn = document.getElementById('ssoTabRegBtn');
+            ssoAlertError = document.getElementById('ssoAlertError');
+            ssoAlertSuccess = document.getElementById('ssoAlertSuccess');
+            ssoAlertErrorText = document.getElementById('ssoAlertErrorText');
+            ssoAlertSuccessText = document.getElementById('ssoAlertSuccessText');
+            ssoActiveName = document.getElementById('ssoActiveName');
+            ssoActiveRole = document.getElementById('ssoActiveRole');
+            ssoActiveAvatar = document.getElementById('ssoActiveAvatar');
+            ssoUsernameInput = document.getElementById('ssoUsernameInput');
+            ssoGradeInput = document.getElementById('ssoGradeInput');
+            ssoRegFullName = document.getElementById('ssoRegFullName');
+            ssoRegUsername = document.getElementById('ssoRegUsername');
+            ssoRegGrade = document.getElementById('ssoRegGrade');
+            ssoRegClassLetter = document.getElementById('ssoRegClassLetter');
+        }
 
-    const savedTheme = localStorage.getItem('tdv_theme') || 'dark';
-    applyTheme(savedTheme);
+        function getHubSession() {
+            try {
+                const raw = localStorage.getItem(SSO_SESSION_KEY);
+                if (raw) {
+                    const sess = JSON.parse(raw);
+                    if (sess && sess.expiresAt > Date.now()) return sess;
+                    // Session expired, remove it
+                    localStorage.removeItem(SSO_SESSION_KEY);
+                }
+            } catch (e) {
+                console.error("Error parsing SSO session from localStorage:", e);
+                localStorage.removeItem(SSO_SESSION_KEY); // Corrupted data
+            }
+            return null;
+        }
 
-    // Idea Modal Handling
-    const ideaModal = document.getElementById('ideaModal');
-    let lastIdeaSubmitTime = 0;
+        function updateSsoUi() {
+            const sess = getHubSession();
 
-    function openIdeaModal() {
-      ideaModal.showModal();
-      const authorInput = document.getElementById('ideaAuthor');
-      if (authorInput) setTimeout(() => authorInput.focus(), 80);
-    }
+            if (ssoUserLabel && ssoAuthBtn) {
+                if (sess) {
+                    ssoUserLabel.textContent = sess.fullName || sess.username;
+                    ssoAuthBtn.classList.add('bg-purple-500/25', 'border-purple-400/50', 'text-white');
+                } else {
+                    ssoUserLabel.textContent = 'Vahid Giriş';
+                    ssoAuthBtn.classList.remove('bg-purple-500/25', 'border-purple-400/50', 'text-white');
+                }
+            }
 
-    function closeIdeaModal() {
-      ideaModal.close();
-      document.getElementById('ideaFeedback').classList.add('hidden');
-    }
+            // Update outbound links with SSO ticket
+            const ticket = sess ? btoa(unescape(encodeURIComponent(JSON.stringify(sess)))) : '';
+            document.querySelectorAll('a[href*="tdv-e-school.vercel.app"], a[href*="school-minifootball-tournament.vercel.app"], a[href*="tdv-games.vercel.app"], a[href*="tdv-mafia-pzvc.vercel.app"]').forEach(link => {
+                const baseHref = link.getAttribute('data-base-href') || link.href.split('?')[0];
+                link.setAttribute('data-base-href', baseHref); // Ensure base-href is always set
+                if (ticket) {
+                    // Check if the link already has a query string to append correctly
+                    link.href = baseHref + (baseHref.includes('?') ? '&' : '?') + 'sso_ticket=' + encodeURIComponent(ticket);
+                } else {
+                    link.href = baseHref;
+                }
+            });
+        }
 
-    ideaModal.addEventListener('click', (e) => { if (e.target === ideaModal) closeIdeaModal(); });
+        function showSsoAlert(type, message) {
+            if (ssoAlertError) ssoAlertError.classList.add('hidden');
+            if (ssoAlertSuccess) ssoAlertSuccess.classList.add('hidden');
 
-    function updateIdeaCharCount(el) {
-      const countEl = document.getElementById('ideaCharCount');
-      if (countEl) countEl.textContent = `${el.value.length} / 300`;
-    }
+            if (type === 'error' && ssoAlertErrorText && ssoAlertError) {
+                ssoAlertErrorText.textContent = message;
+                ssoAlertError.classList.remove('hidden');
+            } else if (type === 'success' && ssoAlertSuccessText && ssoAlertSuccess) {
+                ssoAlertSuccessText.textContent = message;
+                ssoAlertSuccess.classList.remove('hidden');
+            }
+        }
 
-    function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-      }[tag] || tag));
-    }
+        function hideSsoAlerts() {
+            if (ssoAlertError) ssoAlertError.classList.add('hidden');
+            if (ssoAlertSuccess) ssoAlertSuccess.classList.add('hidden');
+        }
 
-    function submitIdea(e) {
-      e.preventDefault();
-      const now = Date.now();
-      if (now - lastIdeaSubmitTime < 5000) {
-        alert('Zəhmət olmasa yeni təklif göndərməzdən əvvəl bir neçə saniyə gözləyin.');
-        return;
-      }
+        function openSsoModal() {
+            const sess = getHubSession();
+            if (sess) {
+                if (ssoActiveName) ssoActiveName.textContent = sess.fullName || sess.username;
+                if (ssoActiveRole) ssoActiveRole.textContent = sess.role === 'teacher' ? 'Fənn Müəllimi' : (sess.schoolClass ? `${sess.schoolClass} Şagirdi` : 'Məktəb Şagirdi');
+                if (ssoActiveAvatar) ssoActiveAvatar.textContent = sess.avatar || '🧑‍🎓';
+                ssoProfileModal?.classList.remove('hidden');
+            } else {
+                // Default to login view
+                ssoSwitchTab('login');
+                ssoLoginModal?.classList.remove('hidden');
+            }
+            // Only call lucide.createIcons() once if the modal potentially contains new icons
+            lucide?.createIcons();
+        }
 
-      const author = escapeHTML(document.getElementById('ideaAuthor').value.trim().slice(0, 50));
-      const text = escapeHTML(document.getElementById('ideaText').value.trim().slice(0, 300));
-      if (!author || !text) return;
+        function closeSsoModal() {
+            ssoLoginModal?.classList.add('hidden');
+            ssoProfileModal?.classList.add('hidden');
+            hideSsoAlerts();
+        }
 
-      lastIdeaSubmitTime = now;
-      const ideas = JSON.parse(localStorage.getItem('tdv_game_ideas') || '[]');
-      ideas.push({ author, text, date: new Date().toISOString() });
-      localStorage.setItem('tdv_game_ideas', JSON.stringify(ideas));
+        function ssoSwitchTab(tab) {
+            hideSsoAlerts();
 
-      document.getElementById('ideaFeedback').classList.remove('hidden');
-      setTimeout(() => {
-        closeIdeaModal();
-        document.getElementById('ideaForm').reset();
-        const countEl = document.getElementById('ideaCharCount');
-        if (countEl) countEl.textContent = '0 / 300';
-      }, 1400);
-    }
+            if (tab === 'login') {
+                ssoLoginView?.classList.remove('hidden');
+                ssoRegisterView?.classList.add('hidden');
+                ssoTabLoginBtn?.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'text-white', 'shadow-md');
+                ssoTabLoginBtn?.classList.remove('text-slate-400', 'hover:text-white');
+                ssoTabRegBtn?.classList.remove('bg-gradient-to-r', 'from-cyan-600', 'to-teal-600', 'text-white', 'shadow-md');
+                ssoTabRegBtn?.classList.add('text-slate-400', 'hover:text-white');
+            } else {
+                ssoLoginView?.classList.add('hidden');
+                ssoRegisterView?.classList.remove('hidden');
+                ssoTabLoginBtn?.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'text-white', 'shadow-md');
+                ssoTabLoginBtn?.classList.add('text-slate-400', 'hover:text-white');
+                ssoTabRegBtn?.classList.add('bg-gradient-to-r', 'from-cyan-600', 'to-teal-600', 'text-white', 'shadow-md');
+                ssoTabRegBtn?.classList.remove('text-slate-400', 'hover:text-white');
+
+                // Reset registration form fields and avatar selection on tab switch
+                if (ssoRegFullName) ssoRegFullName.value = '';
+                if (ssoRegUsername) ssoRegUsername.value = '';
+                if (ssoRegGrade) ssoRegGrade.value = '10'; // Default grade
+                if (ssoRegClassLetter) ssoRegClassLetter.value = 'A'; // Default class letter
+                const firstAvatarBtn = document.querySelector('.sso-avatar-btn');
+                if (firstAvatarBtn) TDV.SSO.ssoSelectAvatar('🧑‍🎓', firstAvatarBtn);
+            }
+        }
+
+        function ssoSelectAvatar(av, btn) {
+            currentRegAvatar = av;
+            document.querySelectorAll('.sso-avatar-btn').forEach(b => {
+                b.classList.remove('bg-purple-500', 'text-white', 'scale-110', 'shadow-md', 'ring-2', 'ring-purple-400', 'selected');
+                b.classList.add('bg-slate-800', 'hover:bg-slate-700');
+            });
+            btn?.classList.add('bg-purple-500', 'text-white', 'scale-110', 'shadow-md', 'ring-2', 'ring-purple-400', 'selected');
+            btn?.classList.remove('bg-slate-800', 'hover:bg-slate-700');
+        }
+
+        function ssoLoginHandler(e) {
+            e.preventDefault();
+            TDV.SSO.ssoLogin(ssoUsernameInput.value, ssoGradeInput.value);
+        }
+
+        function ssoQuickLogin(username, grade, role = 'student') {
+            TDV.SSO.ssoLogin(username, grade, role);
+        }
+
+        function ssoRegisterHandler(e) {
+            e.preventDefault();
+            TDV.SSO.ssoRegister(
+                ssoRegFullName.value,
+                ssoRegUsername.value,
+                ssoRegGrade.value,
+                ssoRegClassLetter.value
+            );
+        }
+
+        function ssoLogin(username, grade, roleParam) {
+            hideSsoAlerts();
+            const trimmed = (username || '').trim();
+            if (!trimmed) {
+                showSsoAlert('error', 'Zəhmət olmasa ad və ya şagird kodunuzu daxil edin.');
+                return;
+            }
+
+            const cleanGrade = Number(grade) || 10;
+            const role = roleParam || (cleanGrade === 0 ? 'teacher' : 'student');
+            const avatar = role === 'teacher' ? '👨‍🏫' : (cleanGrade >= 10 ? '🧑‍🎓' : '🎒');
+            const schoolClass = cleanGrade > 0 ? `${cleanGrade}A` : 'Müəllim'; // Default A for students, Teacher for teachers
+
+            // Mock: In a real system, you'd verify credentials against a backend here.
+            // For this mock, if a registered user with this username exists, use their data, otherwise create a new mock session.
+            const regUsersRaw = localStorage.getItem(REGISTERED_USERS_KEY);
+            const regUsers = regUsersRaw ? JSON.parse(regUsersRaw) : [];
+            const existingUser = regUsers.find(u => u.username === trimmed && (role === 'teacher' ? u.role === 'teacher' : u.grade === cleanGrade));
+
+            const session = existingUser || { // If no existing user, create a new mock session
+                userId: 'tdv-usr-' + Date.now().toString(36),
+                username: trimmed,
+                fullName: trimmed,
+                grade: cleanGrade,
+                schoolClass: schoolClass,
+                role: role,
+                avatar: avatar,
+                token: 'tdv_token_' + Math.random().toString(36).substring(2),
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
+            };
+            // Ensure expiration is always updated for the current login
+            session.expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000);
+
+            localStorage.setItem(SSO_SESSION_KEY, JSON.stringify(session));
+            closeSsoModal();
+            updateSsoUi();
+        }
+
+        function ssoRegister(fullName, username, grade, classLetter) {
+            hideSsoAlerts();
+
+            const trimmedName = (fullName || '').trim();
+            const trimmedUser = (username || '').trim();
+
+            if (!trimmedName) {
+                showSsoAlert('error', 'Zəhmət olmasa ad və soyadınızı daxil edin.');
+                return;
+            }
+            if (!trimmedUser) {
+                showSsoAlert('error', 'Zəhmət olmasa istifadəçi adı daxil edin.');
+                return;
+            }
+
+            const cleanGrade = Number(grade) || 10;
+            const finalClass = cleanGrade > 0 ? `${cleanGrade}${classLetter || 'A'}` : 'Müəllim';
+            const role = cleanGrade === 0 ? 'teacher' : 'student';
+
+            // Check for existing username (mock logic)
+            const regUsersRaw = localStorage.getItem(REGISTERED_USERS_KEY);
+            const regUsers = regUsersRaw ? JSON.parse(regUsersRaw) : [];
+            if (regUsers.some(u => u.username === trimmedUser)) {
+                showSsoAlert('error', 'Bu istifadəçi adı artıq qeydiyyatdan keçib. Zəhmət olmasa başqa ad seçin.');
+                return;
+            }
+
+            const session = {
+                userId: 'tdv-usr-' + Date.now().toString(36),
+                username: trimmedUser,
+                fullName: trimmedName,
+                grade: cleanGrade,
+                schoolClass: finalClass,
+                role: role,
+                avatar: currentRegAvatar || (role === 'teacher' ? '👨‍🏫' : '🧑‍🎓'),
+                token: 'tdv_token_' + Math.random().toString(36).substring(2),
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
+            };
+
+            try {
+                regUsers.push(session); // Store without PIN
+                localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(regUsers));
+                localStorage.setItem(SSO_SESSION_KEY, JSON.stringify(session));
+
+                showSsoAlert('success', 'Hesabınız uğurla yaradıldı! Daxil olunur...');
+                setTimeout(() => {
+                    closeSsoModal();
+                    updateSsoUi();
+                }, 500);
+            } catch (e) {
+                console.error("Error during SSO registration:", e);
+                showSsoAlert('error', 'Qeydiyyat zamanı xəta baş verdi.');
+            }
+        }
+
+        function ssoLogout() {
+            localStorage.removeItem(SSO_SESSION_KEY);
+            closeSsoModal();
+            updateSsoUi();
+        }
+
+        // Initialize SSO module
+        function init() {
+            cacheDomElements();
+            updateSsoUi();
+
+            // Attach event listeners for SSO modals and buttons
+            ssoAuthBtn?.addEventListener('click', openSsoModal);
+            document.querySelector('#ssoLoginModal .absolute.top-5.right-5')?.addEventListener('click', closeSsoModal);
+            document.querySelector('#ssoProfileModal .absolute.top-5.right-5')?.addEventListener('click', closeSsoModal);
+            document.querySelector('#ssoProfileModal button:last-child')?.addEventListener('click', ssoLogout); // Logout button
+            document.querySelector('#ssoProfileModal button:first-child')?.addEventListener('click', closeSsoModal); // Close button in profile modal
+
+            ssoTabLoginBtn?.addEventListener('click', () => ssoSwitchTab('login'));
+            ssoTabRegBtn?.addEventListener('click', () => ssoSwitchTab('register'));
+
+            // Login form submit
+            document.getElementById('ssoLoginForm')?.addEventListener('submit', ssoLoginHandler);
+            // Quick login buttons
+            document.getElementById('ssoQuickLogin1')?.addEventListener('click', () => ssoQuickLogin('Orxan Əliyev', 10));
+            document.getElementById('ssoQuickLogin2')?.addEventListener('click', () => ssoQuickLogin('Murad Məmmədov', 11));
+            document.getElementById('ssoQuickLogin3')?.addEventListener('click', () => ssoQuickLogin('Aysel Müəllimə', 0, 'teacher'));
+
+            // Registration form submit
+            document.getElementById('ssoRegisterForm')?.addEventListener('submit', ssoRegisterHandler);
+
+            document.querySelectorAll('.sso-avatar-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => TDV.SSO.ssoSelectAvatar(e.target.textContent.trim(), e.target));
+            });
+
+            // Set default avatar for registration initially
+            const initialAvatarBtn = document.querySelector('.sso-avatar-btn');
+            if (initialAvatarBtn) ssoSelectAvatar('🧑‍🎓', initialAvatarBtn);
+        }
+
+        return {
+            init: init,
+            getHubSession: getHubSession,
+            updateSsoUi: updateSsoUi,
+            openSsoModal: openSsoModal,
+            closeSsoModal: closeSsoModal,
+            ssoSwitchTab: ssoSwitchTab,
+            ssoSelectAvatar: ssoSelectAvatar,
+            ssoLogin: ssoLogin,
+            ssoRegister: ssoRegister,
+            ssoLogout: ssoLogout
+        };
+    })();
+
+    // UI and Theme Module
+    TDV.UI = (function() {
+        let themeToggleBtn, themeIcon, metaThemeColor,
+            ideaModal, ideaForm, ideaAuthor, ideaText, ideaCharCount, ideaFeedback,
+            openIdeaModalBtn, closeIdeaModalBtn, submitIdeaCtaBtn; // Renamed to avoid confusion with form submit
+
+        let lastIdeaSubmitTime = 0;
+
+        function cacheDomElements() {
+            themeToggleBtn = document.getElementById('themeToggleBtn');
+            themeIcon = document.getElementById('themeIcon');
+            metaThemeColor = document.getElementById('metaThemeColor');
+            ideaModal = document.getElementById('ideaModal');
+            ideaForm = document.getElementById('ideaForm');
+            ideaAuthor = document.getElementById('ideaAuthor');
+            ideaText = document.getElementById('ideaText');
+            ideaCharCount = document.getElementById('ideaCharCount');
+            ideaFeedback = document.getElementById('ideaFeedback');
+            openIdeaModalBtn = document.getElementById('openIdeaModalBtn');
+            closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
+            submitIdeaCtaBtn = document.getElementById('submitIdeaBtn');
+        }
+
+        function applyTheme(theme) {
+            const html = document.documentElement;
+            if (theme === 'light') {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                if (themeIcon) themeIcon.setAttribute('data-lucide', 'moon');
+                if (metaThemeColor) metaThemeColor.setAttribute('content', '#F8FAFC');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                if (themeIcon) themeIcon.setAttribute('data-lucide', 'sun');
+                if (metaThemeColor) metaThemeColor.setAttribute('content', '#080C16');
+            }
+            lucide?.createIcons();
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const newTheme = isDark ? 'light' : 'dark';
+            localStorage.setItem('tdv_theme', newTheme);
+            applyTheme(newTheme);
+        }
+
+        function openIdeaModal() {
+            ideaModal?.showModal();
+            if (ideaAuthor) setTimeout(() => ideaAuthor.focus(), 80);
+        }
+
+        function closeIdeaModal() {
+            ideaModal?.close();
+            ideaFeedback?.classList.add('hidden');
+        }
+
+        function updateIdeaCharCountHandler() {
+            if (ideaCharCount && ideaText) ideaCharCount.textContent = `${ideaText.value.length} / 300`;
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function submitIdeaHandler(e) {
+            e.preventDefault();
+            const now = Date.now();
+            if (now - lastIdeaSubmitTime < 5000) {
+                alert('Zəhmət olmasa yeni təklif göndərməzdən əvvəl bir neçə saniyə gözləyin.');
+                return;
+            }
+
+            const author = escapeHTML((ideaAuthor?.value || '').trim().slice(0, 50));
+            const text = escapeHTML((ideaText?.value || '').trim().slice(0, 300));
+            if (!author || !text) {
+                alert('Zəhmət olmasa adınızı və ideyanızı daxil edin.');
+                return;
+            }
+
+            lastIdeaSubmitTime = now;
+            const ideas = JSON.parse(localStorage.getItem('tdv_game_ideas') || '[]');
+            ideas.push({ author, text, date: new Date().toISOString() });
+            localStorage.setItem('tdv_game_ideas', JSON.stringify(ideas));
+
+            ideaFeedback?.classList.remove('hidden');
+            setTimeout(() => {
+                closeIdeaModal();
+                ideaForm?.reset();
+                if (ideaCharCount) ideaCharCount.textContent = '0 / 300';
+            }, 1400);
+        }
+
+        function init() {
+            cacheDomElements();
+
+            // Apply saved theme
+            const savedTheme = localStorage.getItem('tdv_theme') || 'dark';
+            applyTheme(savedTheme);
+
+            // Attach event listeners for Idea Modal
+            openIdeaModalBtn?.addEventListener('click', openIdeaModal);
+            closeIdeaModalBtn?.addEventListener('click', closeIdeaModal);
+            submitIdeaCtaBtn?.addEventListener('click', openIdeaModal); // This button also opens the modal
+
+            ideaModal?.addEventListener('click', (e) => {
+                if (e.target === ideaModal) closeIdeaModal();
+            });
+            ideaText?.addEventListener('input', updateIdeaCharCountHandler);
+            ideaForm?.addEventListener('submit', submitIdeaHandler);
+
+            themeToggleBtn?.addEventListener('click', toggleTheme);
+        }
+
+        return {
+            init: init,
+            openIdeaModal: openIdeaModal,
+            closeIdeaModal: closeIdeaModal,
+            toggleTheme: toggleTheme
+        };
+    })();
+
+
+    // Global initializations
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide?.createIcons(); // Initialize all static icons once
+        TDV.SSO.init();
+        TDV.UI.init();
+    });
+
+    // Call updateSsoUi on window load as well, for robustness against race conditions with external scripts/resources
+    window.addEventListener('load', () => {
+        TDV.SSO.updateSsoUi();
+    });
   </script>
-  <!-- ================= SSO LOGIN & PROFILE MODALS ================= -->
   <!-- ================= SSO LOGIN & REGISTRATION MODALS ================= -->
   <!-- SSO Login & Registration Modal -->
   <div id="ssoLoginModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto font-sans">
     <div class="w-full max-w-md p-6 sm:p-8 rounded-3xl bg-slate-900 border border-white/10 shadow-2xl space-y-5 relative my-auto">
-      <button onclick="closeSsoModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+      <button onclick="TDV.SSO.closeSsoModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
 
@@ -834,11 +1008,11 @@
 
       <!-- Segmented Tab Switcher -->
       <div class="flex p-1 rounded-2xl bg-slate-800/80 border border-white/10">
-        <button id="ssoTabLoginBtn" type="button" onclick="ssoSwitchTab('login')" class="flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md">
+        <button id="ssoTabLoginBtn" type="button" class="flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md">
           <i data-lucide="log-in" class="w-3.5 h-3.5 mr-1"></i>
           <span>Vahid Giriş</span>
         </button>
-        <button id="ssoTabRegBtn" type="button" onclick="ssoSwitchTab('register')" class="flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer text-slate-400 hover:text-white">
+        <button id="ssoTabRegBtn" type="button" class="flex-1 py-2 rounded-xl text-xs font-black transition flex items-center justify-center space-x-1.5 cursor-pointer text-slate-400 hover:text-white">
           <i data-lucide="user-plus" class="w-3.5 h-3.5 mr-1"></i>
           <span>Vahid Profil Yarat</span>
         </button>
@@ -856,13 +1030,13 @@
 
       <!-- TAB 1: DAXİL OL -->
       <div id="ssoLoginView" class="space-y-4">
-        <form id="ssoForm" onsubmit="event.preventDefault(); ssoLogin(document.getElementById('ssoUsernameInput').value, document.getElementById('ssoGradeInput').value);" class="space-y-3.5">
+        <form id="ssoLoginForm" class="space-y-3.5">
           <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Ad, Soyad və ya Şagird Kodu:</label>
+            <label for="ssoUsernameInput" class="block text-xs font-bold text-slate-300 mb-1">Ad, Soyad və ya Şagird Kodu:</label>
             <input type="text" id="ssoUsernameInput" placeholder="Məs: Orxan Əliyev" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Sinif / Status:</label>
+            <label for="ssoGradeInput" class="block text-xs font-bold text-slate-300 mb-1">Sinif / Status:</label>
             <select id="ssoGradeInput" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-white/10 text-xs text-white focus:outline-none focus:border-purple-500 cursor-pointer">
               <option value="10">10-cu Sinif Şagirdi</option>
               <option value="11">11-ci Sinif Şagirdi</option>
@@ -873,10 +1047,6 @@
               <option value="0">Fənn Müəllimi</option>
             </select>
           </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Şifrə / PİN Kod:</label>
-            <input type="password" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500" />
-          </div>
           <button type="submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-purple-900/30 transition cursor-pointer">
             Vahid Profil ilə Daxil Ol
           </button>
@@ -885,15 +1055,15 @@
         <div class="pt-3 border-t border-white/10 space-y-2">
           <div class="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">1 Toxunuşla Sürətli Giriş:</div>
           <div class="grid grid-cols-3 gap-2">
-            <button type="button" onclick="ssoLogin('Orxan Əliyev', 10)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-center transition cursor-pointer">
+            <button id="ssoQuickLogin1" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-center transition cursor-pointer">
               <span class="text-sm block">🧑‍🎓</span>
               <span class="text-[10px] font-bold text-slate-300 block">10-cu Sinif</span>
             </button>
-            <button type="button" onclick="ssoLogin('Murad Məmmədov', 11)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-center transition cursor-pointer">
+            <button id="ssoQuickLogin2" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-center transition cursor-pointer">
               <span class="text-sm block">🎒</span>
               <span class="text-[10px] font-bold text-slate-300 block">11-ci Sinif</span>
             </button>
-            <button type="button" onclick="ssoLogin('Aysel Müəllimə', 0, 'teacher')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-center transition cursor-pointer">
+            <button id="ssoQuickLogin3" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-center transition cursor-pointer">
               <span class="text-sm block">👨‍🏫</span>
               <span class="text-[10px] font-bold text-slate-300 block">Müəllim</span>
             </button>
@@ -903,18 +1073,18 @@
 
       <!-- TAB 2: QEYDİYYATDAN KEÇ -->
       <div id="ssoRegisterView" class="hidden space-y-3">
-        <form onsubmit="event.preventDefault(); ssoRegister(document.getElementById('ssoRegFullName').value, document.getElementById('ssoRegUsername').value, document.getElementById('ssoRegGrade').value, document.getElementById('ssoRegClassLetter').value, document.getElementById('ssoRegPin').value, document.getElementById('ssoRegConfirmPin').value);" class="space-y-3">
+        <form id="ssoRegisterForm" class="space-y-3">
           <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Ad və Soyad:</label>
+            <label for="ssoRegFullName" class="block text-xs font-bold text-slate-300 mb-1">Ad və Soyad:</label>
             <input type="text" id="ssoRegFullName" placeholder="Məs: Elmir Qasımov" required class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">İstifadəçi Adı (Giriş Kodu):</label>
+            <label for="ssoRegUsername" class="block text-xs font-bold text-slate-300 mb-1">İstifadəçi Adı (Giriş Kodu):</label>
             <input type="text" id="ssoRegUsername" placeholder="Məs: elmir_10a" required class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Sinif:</label>
+              <label for="ssoRegGrade" class="block text-xs font-bold text-slate-300 mb-1">Sinif:</label>
               <select id="ssoRegGrade" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer">
                 <option value="10">10-cu Sinif</option>
                 <option value="11">11-ci Sinif</option>
@@ -926,7 +1096,7 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Bölmə:</label>
+              <label for="ssoRegClassLetter" class="block text-xs font-bold text-slate-300 mb-1">Bölmə:</label>
               <select id="ssoRegClassLetter" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer">
                 <option value="A">A Qrupu</option>
                 <option value="B">B Qrupu</option>
@@ -939,24 +1109,14 @@
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">Profil Avatarı:</label>
             <div class="flex items-center gap-2 overflow-x-auto py-1">
-              <button type="button" onclick="ssoSelectAvatar('🧑‍🎓', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-purple-500 text-white scale-110 shadow-md ring-2 ring-purple-400">🧑‍🎓</button>
-              <button type="button" onclick="ssoSelectAvatar('👩‍🔬', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">👩‍🔬</button>
-              <button type="button" onclick="ssoSelectAvatar('👨‍💻', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">👨‍💻</button>
-              <button type="button" onclick="ssoSelectAvatar('🎮', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🎮</button>
-              <button type="button" onclick="ssoSelectAvatar('🚀', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🚀</button>
-              <button type="button" onclick="ssoSelectAvatar('🧠', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🧠</button>
-              <button type="button" onclick="ssoSelectAvatar('⭐', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">⭐</button>
-              <button type="button" onclick="ssoSelectAvatar('🏆', this)" class="sso-avatar-btn cursor-pointer w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🏆</button>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Şifrə / PİN:</label>
-              <input type="password" id="ssoRegPin" placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Təkrarı:</label>
-              <input type="password" id="ssoRegConfirmPin" placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🧑‍🎓</button>
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">👩‍🔬</button>
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">👨‍💻</button>
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🎮</button>
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🚀</button>
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🧠</button>
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">⭐</button>
+              <button type="button" class="sso-avatar-btn w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer bg-slate-800 hover:bg-slate-700">🏆</button>
             </div>
           </div>
           <button type="submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-cyan-900/30 transition cursor-pointer mt-1">
@@ -970,7 +1130,7 @@
   <!-- SSO Profile / Logout Modal -->
   <div id="ssoProfileModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
     <div class="w-full max-w-sm p-6 rounded-3xl bg-slate-900 border border-white/10 shadow-2xl space-y-5 relative text-center">
-      <button onclick="closeSsoModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg">
+      <button onclick="TDV.SSO.closeSsoModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
 
@@ -986,10 +1146,10 @@
       </div>
 
       <div class="flex gap-2">
-        <button onclick="closeSsoModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+        <button onclick="TDV.SSO.closeSsoModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
           Bağla
         </button>
-        <button onclick="ssoLogout()" class="flex-1 py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-rose-300 text-xs font-bold transition">
+        <button onclick="TDV.SSO.ssoLogout()" class="flex-1 py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-rose-300 text-xs font-bold transition">
           Çıxış Et
         </button>
       </div>
