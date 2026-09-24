@@ -8,8 +8,26 @@
   <meta name="theme-color" content="#09090b" id="metaThemeColor">
 
   <!-- Favicon & PWA Manifest -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+  <link rel="icon" type="image/png" href="assets/tdv-logo.png">
+  <link rel="apple-touch-icon" href="assets/tdv-logo.png">
   <link rel="manifest" href="manifest.json">
+
+  <!-- Early FOUC Prevention Script -->
+  <script>
+    (function() {
+      try {
+        const stored = localStorage.getItem('tdv_theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (stored === 'light' || (!stored && !prefersDark)) {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        } else {
+          document.documentElement.classList.remove('light');
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,9 +52,15 @@
             brand: {
               50: '#faf5ff',
               100: '#f3e8ff',
+              200: '#e9d5ff',
+              300: '#d8b4fe',
+              400: '#c084fc',
               500: '#a855f7',
               600: '#9333ea',
               700: '#7e22ce',
+              800: '#6b21a8',
+              900: '#581c87',
+              950: '#3b0764',
             }
           }
         }
@@ -52,16 +76,16 @@
       color-scheme: light;
     }
     body {
-      transition: background-color 0.25s ease, color 0.25s ease;
+      transition: background-color 200ms ease, color 200ms ease;
     }
 
     html.dark body {
       background-color: #09090b;
-      color: #f4f4f5;
+      color: #fafafa;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.08) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.06) 0px, transparent 50%),
-        radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+        radial-gradient(ellipse 70% 40% at 50% -10%, rgba(147, 51, 234, 0.15), transparent 70%),
+        radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.06) 0px, transparent 50%);
       background-attachment: fixed;
     }
 
@@ -69,8 +93,9 @@
       background-color: #fafafa;
       color: #09090b;
       background-image: 
+        radial-gradient(ellipse 70% 40% at 50% -10%, rgba(147, 51, 234, 0.06), transparent 70%),
         radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.05) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.04) 0px, transparent 50%);
+        radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.03) 0px, transparent 50%);
       background-attachment: fixed;
     }
 
@@ -78,7 +103,7 @@
       background-color: #ffffff;
       border: 1px solid #e4e4e7;
       box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+      transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms ease;
     }
 
     html.dark .hub-card {
@@ -89,13 +114,28 @@
 
     .hub-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
-      border-color: #cbd5e1;
+      box-shadow: 0 12px 24px -8px rgba(147, 51, 234, 0.12);
+      border-color: rgba(147, 51, 234, 0.35);
     }
 
     html.dark .hub-card:hover {
-      box-shadow: 0 16px 30px -10px rgba(0, 0, 0, 0.7);
-      border-color: #3f3f46;
+      box-shadow: 0 16px 30px -10px rgba(147, 51, 234, 0.25);
+      border-color: rgba(168, 85, 247, 0.45);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(147, 51, 234, 0.6);
     }
 
     .pulse-dot {
@@ -107,30 +147,30 @@
     }
 
     dialog::backdrop {
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-purple-600 selection:text-white antialiased font-sans">
+<body class="min-h-screen flex flex-col justify-between bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 selection:bg-purple-600 selection:text-white antialiased font-sans transition-colors duration-200">
 
   <!-- ================= TOP UNIFIED ORGANIZATION ECOSYSTEM BAR ================= -->
-  <aside aria-label="Organization Ecosystem Bar" class="bg-zinc-100 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 py-1.5 px-4 text-[11px] sticky top-0 z-50 transition-colors">
+  <aside id="tdv-ecosystem-topbar" aria-label="TDV Community Labs Ecosystem Bar" class="bg-white/95 dark:bg-zinc-950/95 border-b border-zinc-200 dark:border-zinc-800 py-1.5 px-3 sm:px-4 text-[11px] sticky top-0 z-50 transition-colors duration-200 shadow-sm" style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif;">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
-      <!-- Left: Org Brand & Live Ticker -->
+      <!-- Left: Institutional Crest & Live Ticker -->
       <div class="flex items-center gap-2.5 overflow-hidden">
-        <div class="flex items-center gap-1.5 shrink-0 font-bold text-zinc-900 dark:text-zinc-100">
-          <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-          <span class="hidden sm:inline text-zinc-500 dark:text-zinc-400 font-normal">Təşkilat:</span>
-          <a href="https://tdv-community-hubs.vercel.app/" class="tracking-tight hover:text-purple-600 dark:hover:text-purple-400 transition">TDV Community Labs</a>
-        </div>
+        <a href="https://tdv-community-hubs.vercel.app/" class="inline-flex items-center gap-2 font-extrabold text-zinc-950 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition shrink-0" style="text-decoration: none;">
+          <img src="assets/tdv-logo.png" alt="TDV BTL Crest" class="w-5 h-5 rounded-full object-cover border border-purple-500/70 shadow-sm shrink-0" />
+          <span class="tracking-tight text-zinc-950 dark:text-white font-black text-[11px] hidden min-[380px]:inline">TDV Community Labs</span>
+          <span class="tracking-tight text-zinc-950 dark:text-white font-black text-[11px] min-[380px]:hidden">TDV BTL</span>
+        </a>
         <span class="text-zinc-300 dark:text-zinc-700 hidden sm:inline">•</span>
         <div class="flex items-center gap-2 truncate">
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 font-bold text-[9px] uppercase shrink-0 border border-rose-500/20">
-            <i data-lucide="shield-alert" class="w-2.5 h-2.5"></i>
-            Mafia Canlı
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-bold text-[9px] uppercase shrink-0 border border-purple-500/25">
+            <i data-lucide="gamepad-2" class="w-2.5 h-2.5"></i>
+            Games & Mafia
           </span>
           <span id="tickerText" class="text-zinc-600 dark:text-zinc-300 text-[11px] truncate">
             🕵️‍♂️ TDV Mafia: 15 fərqli oyun rejimi və canlı oyun masaları aktivdir!
@@ -138,15 +178,29 @@
         </div>
       </div>
 
-      <!-- Right: Direct Link to Hub & Theme Toggle -->
-      <div class="flex items-center gap-2.5 shrink-0">
-        <a href="https://tdv-community-hubs.vercel.app/" class="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-lg border border-indigo-500/20 transition cursor-pointer">
-          <i data-lucide="arrow-left" class="w-3 h-3"></i>
-          <span>Mərkəzə Qayıt</span>
-        </a>
+      <!-- Right: Unified Ecosystem Switcher Pill & Theme Toggle -->
+      <div class="flex items-center gap-2 shrink-0">
+        <nav class="hidden sm:flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-0.5 rounded-xl text-xs font-medium">
+          <a href="https://tdv-community-hubs.vercel.app/" class="px-2 py-1 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition flex items-center gap-1" title="TDV Hub Mərkəzi Portalı">
+            <i data-lucide="home" class="w-3 h-3 text-purple-400"></i>
+            <span class="hidden md:inline">Mərkəz</span>
+          </a>
+          <a href="https://tdv-e-school.vercel.app/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition flex items-center gap-1" title="TDV E-School">
+            <i data-lucide="graduation-cap" class="w-3 h-3 text-purple-400"></i>
+            <span class="hidden md:inline">E-School</span>
+          </a>
+          <a href="https://school-minifootball-tournament.vercel.app/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition flex items-center gap-1" title="TDV Sports Minifutbol Turniri">
+            <i data-lucide="trophy" class="w-3 h-3 text-purple-400"></i>
+            <span class="hidden md:inline">Sports</span>
+          </a>
+          <a href="index.html" class="px-2 py-1 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold shadow-sm flex items-center gap-1" title="TDV Games (Aktiv)">
+            <i data-lucide="gamepad-2" class="w-3 h-3"></i>
+            <span class="hidden md:inline">Games</span>
+          </a>
+        </nav>
 
         <!-- Theme Toggle Button -->
-        <button type="button" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Mövzunu dəyiş" class="p-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 transition flex items-center justify-center cursor-pointer shadow-sm">
+        <button type="button" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Mövzunu dəyiş" class="p-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-800 transition flex items-center justify-center cursor-pointer shadow-sm">
           <i id="themeIcon" data-lucide="sun" class="w-3.5 h-3.5 text-amber-500"></i>
         </button>
       </div>
@@ -160,34 +214,34 @@
       
       <!-- Brand Logo -->
       <div class="flex items-center space-x-3 shrink-0">
-        <a href="index.html" class="flex items-center gap-3 group">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-600 to-rose-600 flex items-center justify-center shadow-md shadow-purple-500/25 group-hover:scale-105 transition">
+        <a href="index.html" class="flex items-center gap-3 group" style="text-decoration: none;">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-600/25 border border-white/20 group-hover:scale-105 transition-transform duration-200">
             <i data-lucide="gamepad-2" class="w-5 h-5 text-white"></i>
           </div>
           <div>
             <span class="font-extrabold text-lg tracking-tight text-zinc-950 dark:text-white flex items-center gap-1.5">
-              TDV <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-rose-600 dark:from-purple-400 dark:to-rose-400">Games</span>
+              TDV <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-purple-500 to-fuchsia-600 dark:from-purple-400 dark:via-fuchsia-400 dark:to-indigo-300">Games</span>
             </span>
-            <span class="block text-[10px] text-zinc-500 dark:text-zinc-400 -mt-1 font-medium">Oyun & Sosial Deduksiya Zonası</span>
+            <span class="block text-[10px] text-zinc-500 dark:text-zinc-400 -mt-1 font-medium">Bakı Türk Liseyi • Oyun və Sosial Deduksiya Zonası</span>
           </div>
         </a>
       </div>
 
       <!-- Ecosystem Switcher Links -->
       <nav class="hidden md:flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-1 rounded-2xl text-xs font-medium">
-        <a href="https://tdv-community-hubs.vercel.app/" class="px-3 py-1.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5">
-          <i data-lucide="home" class="w-3.5 h-3.5 text-indigo-500"></i>
+        <a href="https://tdv-community-hubs.vercel.app/" class="px-3 py-1.5 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5">
+          <i data-lucide="home" class="w-3.5 h-3.5 text-purple-500"></i>
           Mərkəz
         </a>
-        <a href="https://tdv-e-school.vercel.app/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5">
-          <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-emerald-500"></i>
+        <a href="https://tdv-e-school.vercel.app/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5">
+          <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-purple-500"></i>
           E-School
         </a>
-        <a href="https://school-minifootball-tournament-2.vercel.app/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5">
-          <i data-lucide="trophy" class="w-3.5 h-3.5 text-blue-500"></i>
+        <a href="https://school-minifootball-tournament.vercel.app/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition flex items-center gap-1.5">
+          <i data-lucide="trophy" class="w-3.5 h-3.5 text-purple-500"></i>
           Sports
         </a>
-        <a href="index.html" class="px-3 py-1.5 rounded-xl bg-purple-600 text-white font-semibold shadow-sm flex items-center gap-1.5">
+        <a href="index.html" class="px-3 py-1.5 rounded-xl bg-purple-600 text-white font-bold shadow-sm flex items-center gap-1.5">
           <i data-lucide="gamepad-2" class="w-3.5 h-3.5"></i>
           Games
           <span class="text-[9px] px-1 py-0.2 rounded bg-white/20 text-white font-bold">Aktiv</span>
@@ -196,7 +250,7 @@
 
       <!-- Action Button: Launch Mafia Directly -->
       <div class="flex items-center gap-2">
-        <a href="https://tdv-mafia.vercel.app/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 px-4 py-2 rounded-xl shadow-md shadow-rose-900/20 transition cursor-pointer">
+        <a href="https://tdv-mafia.vercel.app/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-rose-600 to-red-600 hover:from-purple-500 hover:to-rose-500 px-4 py-2 rounded-xl shadow-md shadow-purple-900/20 hover:scale-[1.02] transition cursor-pointer">
           <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
           <span>Mafia-ya Başla</span>
         </a>
@@ -215,14 +269,14 @@
       </div>
       <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-zinc-950 dark:text-white tracking-tight leading-tight mb-4">
         Strateji Məntiq, Deduksiya və <br>
-        <span class="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 dark:from-purple-400 dark:via-pink-400 dark:to-rose-400 bg-clip-text text-transparent">İnteraktiv Əyləncə Zonası</span>
+        <span class="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-rose-600 dark:from-purple-400 dark:via-fuchsia-400 dark:to-rose-400 bg-clip-text text-transparent">İnteraktiv Əyləncə Zonası</span>
       </h1>
       <p class="text-zinc-600 dark:text-zinc-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto mb-6 font-normal">
         TDV Games — məktəb şagirdlərinin birgə intellektual vaxt keçirməsi, sosial deduksiya masalarında strategiya qurması və yeni oyun layihələri üçün nəzərdə tutulmuş rəsmi əyləncə qanadıdır.
       </p>
 
       <div class="flex items-center justify-center gap-3 flex-wrap">
-        <a href="#tdv-mafia" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-sm shadow-md shadow-rose-900/20 transition cursor-pointer">
+        <a href="#tdv-mafia" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-purple-700 to-rose-600 hover:from-purple-500 hover:to-rose-500 text-white font-bold text-sm shadow-md shadow-purple-900/20 transition cursor-pointer">
           <i data-lucide="shield-alert" class="w-4 h-4"></i>
           <span>TDV Mafia (15 Format)</span>
         </a>
@@ -236,23 +290,23 @@
     <!-- ================= FEATURED SHOWCASE: TDV MAFIA ================= -->
     <section id="tdv-mafia" class="mb-14 scroll-mt-20">
       
-      <div class="hub-card rounded-3xl p-6 sm:p-10 border border-rose-500/30 relative overflow-hidden shadow-xl">
+      <div class="hub-card rounded-3xl p-6 sm:p-10 border border-purple-500/30 relative overflow-hidden shadow-xl">
         <!-- Glow accents -->
         <div class="absolute -top-24 -right-24 w-80 h-80 bg-rose-600/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
           
           <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8 border-b border-zinc-200 dark:border-zinc-800 pb-6">
             <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-800 border border-rose-400/40 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-rose-600/30 shrink-0">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-700 via-rose-600 to-red-800 border border-purple-400/40 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-purple-600/30 shrink-0">
                 M
               </div>
               <div>
                 <div class="flex items-center gap-2 flex-wrap mb-1">
                   <h2 class="text-2xl sm:text-3xl font-black text-zinc-950 dark:text-white">TDV Mafia</h2>
-                  <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/25">
-                    <span class="w-2 h-2 rounded-full bg-rose-500 pulse-dot"></span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">
+                    <span class="w-2 h-2 rounded-full bg-purple-500 pulse-dot"></span>
                     Canlı & Aktiv Platforma
                   </span>
                 </div>
@@ -263,7 +317,7 @@
             </div>
 
             <!-- Direct Launch Button -->
-            <a href="https://tdv-mafia.vercel.app/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2.5 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-500 hover:to-red-500 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-lg shadow-rose-900/30 hover:scale-[1.02] transition duration-200 text-sm cursor-pointer">
+            <a href="https://tdv-mafia.vercel.app/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2.5 bg-gradient-to-r from-purple-600 via-rose-600 to-purple-700 hover:from-purple-500 hover:to-rose-500 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-lg shadow-purple-900/30 hover:scale-[1.02] transition duration-200 text-sm cursor-pointer">
               <span>Masaya Qoşul / Portala Daxil Ol</span>
               <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
             </a>
@@ -450,8 +504,8 @@
             </p>
           </div>
           <div>
-            <a href="https://tdv-e-school.vercel.app/" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold transition cursor-pointer">
-              <span>Arenaya Get</span>
+            <a href="https://tdv-e-school.vercel.app/" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30 text-xs font-bold transition cursor-pointer">
+              <span>Arenaya Get (E-School)</span>
               <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
             </a>
           </div>
@@ -471,7 +525,7 @@
         <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-5 font-normal">
           Məktəb portalında hansı oyunların yer almasını istərdin? İdeyalarını və ya kodlaşdırdığın mini-veb layihəni bizimlə bölüş.
         </p>
-        <button type="button" onclick="openIdeaModal()" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-purple-900/20 transition cursor-pointer">
+        <button type="button" onclick="openIdeaModal()" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold text-xs shadow-md shadow-purple-900/25 transition cursor-pointer">
           <i data-lucide="send" class="w-3.5 h-3.5"></i>
           <span>İdeya Formunu Aç</span>
         </button>
@@ -484,19 +538,24 @@
   <footer class="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-zinc-100 dark:bg-zinc-950 transition-colors">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500 dark:text-zinc-400">
       <div class="flex items-center gap-2">
+        <img src="assets/tdv-logo.png" alt="TDV Crest" class="w-4 h-4 rounded-full object-cover border border-purple-500/40" />
         <span class="font-bold text-zinc-800 dark:text-zinc-200">TDV Community Labs</span>
         <span>•</span>
         <span>© 2026 Məktəb Oyunlar Portalı</span>
       </div>
       <div class="flex items-center gap-4 flex-wrap justify-center">
-        <a href="https://tdv-community-hubs.vercel.app/" class="hover:text-zinc-950 dark:hover:text-white transition">Mərkəzi Kampus</a>
+        <a href="https://tdv-community-hubs.vercel.app/" class="hover:text-purple-600 dark:hover:text-purple-400 transition">Mərkəzi Kampus</a>
+        <span>•</span>
+        <a href="https://tdv-e-school.vercel.app/" target="_blank" rel="noopener noreferrer" class="hover:text-purple-600 dark:hover:text-purple-400 transition">E-School</a>
+        <span>•</span>
+        <a href="https://school-minifootball-tournament.vercel.app/" target="_blank" rel="noopener noreferrer" class="hover:text-purple-600 dark:hover:text-purple-400 transition">Sports</a>
         <span>•</span>
         <a href="https://tdv-mafia.vercel.app/" target="_blank" rel="noopener noreferrer" class="hover:text-rose-600 dark:hover:text-rose-400 text-rose-500 font-medium transition flex items-center gap-1">
           <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
           <span>TDV Mafia</span>
         </a>
         <span>•</span>
-        <a href="https://github.com/tdv-community-labs" target="_blank" rel="noopener noreferrer" class="hover:text-zinc-950 dark:hover:text-white transition">GitHub Repozitoriyası</a>
+        <a href="https://github.com/tdv-community-labs" target="_blank" rel="noopener noreferrer" class="hover:text-zinc-950 dark:hover:text-white transition">GitHub</a>
       </div>
     </div>
   </footer>
@@ -533,7 +592,7 @@
         Təşəkkür edirik! İdeyanız qeydə alındı. 🚀
       </div>
 
-      <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold transition shadow-md shadow-purple-900/20 cursor-pointer">
+      <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold transition shadow-lg shadow-purple-900/25 cursor-pointer">
         İdeyanı Göndər
       </button>
     </form>
