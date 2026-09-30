@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TDV Neon Memory</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --neon-cyan: #06b6d4;
+      --neon-purple: #a855f7;
+      --neon-pink: #ec4899;
+    }
+    
+    body {
+      background: #09090b;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      perspective: 1200px;
+    }
+    
+    .cyber-grid {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px);
+      background-size: 40px 40px;
+      transform: rotateX(60deg) translateY(-100px) translateZ(-200px);
+      transform-origin: top;
+      opacity: 0.3;
+      z-index: -1;
+      animation: gridMove 10s linear infinite;
+    }
+    
+    @keyframes gridMove {
+      from { background-position: 0 0; }
+      to { background-position: 0 40px; }
+    }
+    
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-width: 500px;
+      width: 90%;
+      margin: 20px auto;
+      transform: rotateX(15deg);
+      transform-style: preserve-3d;
+    }
+    
+    .card {
+      aspect-ratio: 3/4;
+      position: relative;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+    
+    .card.matched {
+      transform: rotateY(180deg) scale(0.95);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+    
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    
+    .card-front {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.1));
+      border: 1px solid rgba(168, 85, 247, 0.5);
+      transform: rotateY(180deg);
+    }
+    
+    .card-back {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.1));
+      border: 1px solid rgba(6, 182, 212, 0.5);
+      color: rgba(6, 182, 212, 0.8);
+      font-weight: 900;
+    }
+    
+    .card:hover .card-back {
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 10px rgba(6, 182, 212, 0.2);
+    }
+    
+    .card.matched .card-front {
+      border-color: #10b981;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+    
+    .ui-panel {
+      background: rgba(9, 9, 11, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 20px;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      width: 90%;
+      max-width: 500px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transform: translateZ(20px);
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--neon-cyan);
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    button.glow-btn {
+      background: transparent;
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 12px;
+    }
+    
+    button.glow-btn:hover {
+      background: var(--neon-cyan);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon-cyan);
+    }
+    
+    .victory-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    
+    .victory-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .victory-title {
+      font-size: 4rem;
+      font-weight: 900;
+      background: linear-gradient(to right, #10b981, #34d399);
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.5));
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cyber-grid"></div>
+
+  <div class="ui-panel">
+    <div class="stat">
+      <div class="stat-label">Gediş</div>
+      <div class="stat-value" id="moves">0</div>
+    </div>
+    <button class="glow-btn" onclick="initGame()">Yenidən</button>
+    <div class="stat">
+      <div class="stat-label">Cütlük</div>
+      <div class="stat-value" id="matches">0/8</div>
+    </div>
+  </div>
+
+  <div class="game-board" id="board"></div>
+
+  <div class="victory-overlay" id="victory">
+    <div class="victory-title">SİSTEM HACKLƏNDİ</div>
+    <p class="text-zinc-400 mb-8" id="victory-stats">Gediş: 0</p>
+    <button class="glow-btn" style="border-color: #10b981; color: #10b981;" onclick="initGame()">Yenidən Oyna</button>
+    <a href="index.html" class="mt-4 text-xs text-zinc-500 hover:text-white transition">Geri Qayıt</a>
+  </div>
+
+  <script>
+    const EMOJIS = ['👾', '🤖', '👻', '💎', '🚀', '🔮', '🎲', '🧬'];
+    let cards = [];
+    let hasFlippedCard = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+    let moves = 0;
+    let matches = 0;
+
+    // Audio Context Setup
+    let actx = null;
+    
+    function playSound(type) {
+      if (!actx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if(AudioContextClass) actx = new AudioContextClass();
+      }
+      if (!actx) return;
+      if (actx.state === 'suspended') actx.resume();
+      
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      
+      const now = actx.currentTime;
+      
+      if (type === 'flip') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.2, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === 'match') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } else if (type === 'win') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(440, now); // A
+        osc.frequency.setValueAtTime(554.37, now + 0.2); // C#
+        osc.frequency.setValueAtTime(659.25, now + 0.4); // E
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.2, now + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+        osc.start(now);
+        osc.stop(now + 1.0);
+      }
+    }
+
+    function initGame() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      document.getElementById('victory').classList.remove('show');
+      
+      moves = 0;
+      matches = 0;
+      document.getElementById('moves').innerText = moves;
+      document.getElementById('matches').innerText = `${matches}/8`;
+      hasFlippedCard = false;
+      lockBoard = false;
+      firstCard = null;
+      secondCard = null;
+
+      // Duplicate and shuffle
+      cards = [...EMOJIS, ...EMOJIS];
+      cards.sort(() => Math.random() - 0.5);
+
+      cards.forEach((emoji, index) => {
+        const cardElement = document.createElement('div');
+        cardElement.classList.add('card');
+        cardElement.dataset.emoji = emoji;
+        cardElement.innerHTML = `
+          <div class="card-front">${emoji}</div>
+          <div class="card-back">TDV</div>
+        `;
+        // Stagger animation
+        cardElement.style.animation = `msgPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${index * 0.05}s both`;
+        cardElement.addEventListener('click', flipCard);
+        board.appendChild(cardElement);
+      });
+    }
+
+    function flipCard() {
+      if (lockBoard) return;
+      if (this === firstCard) return;
+
+      this.classList.add('flipped');
+      playSound('flip');
+
+      if (!hasFlippedCard) {
+        hasFlippedCard = true;
+        firstCard = this;
+        return;
+      }
+
+      secondCard = this;
+      moves++;
+      document.getElementById('moves').innerText = moves;
+      checkForMatch();
+    }
+
+    function checkForMatch() {
+      let isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+      if (isMatch) {
+        disableCards();
+      } else {
+        unflipCards();
+      }
+    }
+
+    function disableCards() {
+      firstCard.removeEventListener('click', flipCard);
+      secondCard.removeEventListener('click', flipCard);
+      
+      firstCard.classList.add('matched');
+      secondCard.classList.add('matched');
+      
+      playSound('match');
+      matches++;
+      document.getElementById('matches').innerText = `${matches}/8`;
+      
+      if (matches === 8) {
+        setTimeout(() => {
+          document.getElementById('victory').classList.add('show');
+          document.getElementById('victory-stats').innerText = `Yekun gediş: ${moves}`;
+          playSound('win');
+          // If Achievement system exists
+          if (window.parent && window.parent.unlockAchievement) {
+            window.parent.unlockAchievement('memory_master', 'Memory Master', '🧠', 'common');
+          }
+        }, 1000);
+      }
+      
+      resetBoard();
+    }
+
+    function unflipCards() {
+      lockBoard = true;
+      setTimeout(() => {
+        firstCard.classList.remove('flipped');
+        secondCard.classList.remove('flipped');
+        resetBoard();
+      }, 1000);
+    }
+
+    function resetBoard() {
+      [hasFlippedCard, lockBoard] = [false, false];
+      [firstCard, secondCard] = [null, null];
+    }
+
+    window.onload = initGame;
+  </script>
+</body>
+</html>
