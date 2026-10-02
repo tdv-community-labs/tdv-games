@@ -284,25 +284,35 @@
         else p.update();
       });
       
-      // Invader Projectiles
-      invaderProjectiles.forEach((p, i) => {
+      // Invader Projectiles (Fixed Loop)
+      for (let i = invaderProjectiles.length - 1; i >= 0; i--) {
+        let p = invaderProjectiles[i];
         p.update();
-        if (p.y > canvas.height) invaderProjectiles.splice(i, 1);
+        if (p.y > canvas.height) {
+          invaderProjectiles.splice(i, 1);
+          continue;
+        }
         
         // Hit player
-        if (p.y + p.radius >= player.y && p.x >= player.x && p.x <= player.x + player.width) {
+        if (p.y + p.radius >= player.y && p.y - p.radius <= player.y + player.height && p.x >= player.x && p.x <= player.x + player.width) {
+          invaderProjectiles.splice(i, 1);
           gameOver();
         }
-      });
+      }
       
-      // Player Projectiles
-      projectiles.forEach((p, i) => {
+      // Player Projectiles (Fixed Loop)
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        let p = projectiles[i];
         p.update();
-        if (p.y < 0) projectiles.splice(i, 1);
+        if (p.y < 0) {
+          projectiles.splice(i, 1);
+          continue;
+        }
         
         // Hit invaders
-        invaders.forEach((inv, j) => {
-          if (p.y - p.radius <= inv.y + inv.height && p.x >= inv.x && p.x <= inv.x + inv.width) {
+        for (let j = invaders.length - 1; j >= 0; j--) {
+          let inv = invaders[j];
+          if (p.y - p.radius <= inv.y + inv.height && p.y + p.radius >= inv.y && p.x >= inv.x && p.x <= inv.x + inv.width) {
             createExplosion(inv.x + inv.width/2, inv.y + inv.height/2, inv.color);
             playSound('explosion');
             invaders.splice(j, 1);
@@ -315,9 +325,10 @@
               document.getElementById('waveEl').innerText = wave;
               setTimeout(initWave, 1000);
             }
+            break; // Stop checking this projectile since it exploded
           }
-        });
-      });
+        }
+      }
       
       // Invader logic
       let hitEdge = false;
