@@ -247,7 +247,13 @@
     function initWave() {
       invaders = [];
       const cols = Math.floor(canvas.width / 60) - 2;
-      const rows = Math.min(3 + wave, 8);
+      let rows = Math.min(3 + wave, 8);
+      
+      // Ensure they don't spawn too low on small screens
+      const maxY = player.y - 100;
+      const maxAllowedRows = Math.floor((maxY - 50) / 40);
+      if (rows > maxAllowedRows) rows = Math.max(1, maxAllowedRows);
+
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
           invaders.push(new Invader(i * 50 + 50, j * 40 + 50));
