@@ -81,6 +81,13 @@ check('inline client JavaScript parses with zero syntax errors', () => {
   return true;
 });
 
+// 8. Check Service Worker (sw.js)
+check('sw.js exists and has valid JavaScript syntax', () => {
+  const swCode = fs.readFileSync('sw.js', 'utf8');
+  new vm.Script(swCode);
+  return true;
+});
+
 console.log(`\n✨ Verification Complete: ${passCount} passed, ${failCount} failed.`);
 if (failCount > 0) {
   process.exit(1);
