@@ -119,7 +119,7 @@
 
     function dispatchSSOBrokerState(session, users) {
       try {
-        const BROKER_URL = 'https://tdv-community-hubs.vercel.app/sso-broker.html';
+        const BROKER_URL = 'https://tdv-community-labs.github.io/tdv-hub/sso-broker.html';
         let iframe = document.getElementById('tdv_sso_broker_bridge');
         if (!iframe) {
           iframe = document.createElement('iframe');
@@ -346,13 +346,14 @@
     window.renderUserSessionBadge = renderUserSessionBadge;
 
     (function initTDVEcosystemSSO() {
-      const BROKER_URL = 'https://tdv-community-hubs.vercel.app/sso-broker.html';
+      const BROKER_URL = 'https://tdv-community-labs.github.io/tdv-hub/sso-broker.html';
       const ECO_DOMAINS = [
         'school-minifootball-tournament.vercel.app',
         'tdv-e-school.vercel.app',
         'tdv-games.vercel.app',
         'tdv-mafia.vercel.app',
-        'tdv-community-hubs.vercel.app'
+        'tdv-boardgames.vercel.app',
+        'tdv-community-labs.github.io'
       ];
 
       // 1. Extract sso_ticket from URL parameter if arrived from another portal

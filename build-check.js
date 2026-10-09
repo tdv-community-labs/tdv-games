@@ -55,7 +55,7 @@ check('assets/tdv-logo.png exists and is referenced in index.html', () => {
 check('index.html contains unified TDV ecosystem topbar with all platforms', () => {
   const html = fs.readFileSync('index.html', 'utf8');
   return html.includes('tdv-ecosystem-topbar') &&
-    html.includes('https://tdv-community-hubs.vercel.app/') &&
+    html.includes('https://tdv-community-labs.github.io/tdv-hub/') &&
     html.includes('https://tdv-e-school.vercel.app/') &&
     html.includes('https://school-minifootball-tournament.vercel.app/');
 });
